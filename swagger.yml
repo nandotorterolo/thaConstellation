@@ -1,0 +1,235 @@
+swagger: "2.0"
+info:
+  description: "Node api"
+  version: "0.0.1"
+  title: "Node api"
+
+basePath: "/localhost:8080"
+
+
+paths:
+  /account/balance:
+    post:
+      tags:
+        - "account"
+
+      summary: "get balance from an account"
+
+      consumes:
+        - "application/octet-stream"
+
+      produces:
+        - "application/json"
+
+      parameters:
+
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            type: string
+            format: binary
+            example: "Binary encoded model class AddressIdSigned, (Hash= 64, Signature=144, AddressId=20)"
+
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: '#/definitions/Account'
+        "400":
+          description: Invalid request parameters, Signature validation issues
+        "404":
+          description: Account Not found
+
+  /account/register:
+    post:
+      tags:
+        - "account"
+
+      summary: "register an account in the node"
+
+      consumes:
+        - "application/octet-stream"
+
+      produces:
+        - "application/json"
+
+      parameters:
+
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            type: string
+            format: binary
+            example: "Binary encoded model class AccountSigned, (Hash= 64, Signature=144, Account=TODO)"
+
+      responses:
+        "200":
+          description: "Account Registered"
+          schema:
+            $ref: '#/definitions/Account'
+        "400":
+          description: Invalid request parameters, Signature validation issues
+        "409":
+          description: "Service error: ExistingAddress"
+        "501":
+          description: "Service error: ..."
+
+  /transaction/broadcast:
+    post:
+      tags:
+        - "transaction"
+
+      summary: "submit a transaction"
+
+      consumes:
+        - "application/octet-stream"
+
+      produces:
+        - "application/json"
+
+      parameters:
+
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            type: string
+            format: binary
+            example: "Binary encoded model class TransactionSigned, (Hash= 64, Signature=144, Transaction=TODO)"
+
+      responses:
+        "200":
+          description: "Transaction valid"
+          schema:
+            $ref: '#/definitions/Transaction'
+        "400":
+          description: Invalid request parameters, Signature validation isuues, validation issued
+        "501":
+          description: "Service error: ..."
+
+  /transaction/inspect:
+    post:
+      tags:
+        - "transaction"
+
+      summary: "get a transaction"
+
+      consumes:
+        - "application/octet-stream"
+
+      produces:
+        - "application/json"
+
+      parameters:
+
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            type: string
+            format: binary
+            example: "Binary encoded model class TransactionIdAddressIdSigned, (Hash= 64, Signature=144, TransactionIdAddressId=TODO)"
+
+      responses:
+        "200":
+          description: "Transaction valid"
+          schema:
+            $ref: '#/definitions/Transaction'
+        "400":
+          description: Invalid request parameters, Signature validation isuues, validation issued
+        "501":
+          description: "Service error: ..."
+
+  /block:
+    post:
+      tags:
+        - "block"
+
+      summary: "inspect a block"
+
+      consumes:
+        - "application/octet-stream"
+
+      produces:
+        - "application/json"
+
+      parameters:
+
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            type: string
+            format: string
+            example: "Valid base 58 block id with size=64"
+
+      responses:
+        "200":
+          description: "Transaction valid"
+          schema:
+            $ref: '#/definitions/Block'
+        "400":
+          description: Invalid request parameters, Signature validation isuues, validation issued
+        "501":
+          description: "Service error: ..."
+
+definitions:
+
+  Account:
+    type: object
+    required:
+      - address
+      - balance
+      - latestUsedNonce
+    properties:
+      address:
+        type: string
+        example: 2qYgUZwiJQJsJzrusHHnssU5UvGD
+      balance:
+        type: number
+        example: 100.5
+      latestUsedNonce:
+        type: number
+        example: 1
+
+  Transaction:
+    type: object
+    required:
+      - source
+      - destination
+      - amount
+      - nonce
+    properties:
+      source:
+        type: string
+        example: 2qYgUZwiJQJsJzrusHHnssU5UvGD
+      destination:
+        type: string
+        example: 2qYgUZwiJQJsJzrusHHnssU5UvGD
+      amount:
+        type: number
+        example: 100.5
+      nonce:
+        type: number
+        example: 1
+
+  Block:
+    type: object
+    required:
+      - priorBlock
+      - sequenceNumber
+      - transactions
+
+    properties:
+      priorBlock:
+        type: string
+        example: 2qYgUZwiJQJsJzrusHHnssU5UvGD
+      sequenceNumber:
+        type: number
+        example: 1
+      transactions:
+        type: string
+        example: 2qYgUZwiJQJsJzrusHHnssU5UvGD,2qYgUZwiJQJsJzrusHHnssU5UvGD
+
