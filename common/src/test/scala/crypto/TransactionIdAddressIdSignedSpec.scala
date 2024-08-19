@@ -34,7 +34,7 @@ class TransactionIdAddressIdSignedSpec extends CatsEffectSuite {
 
       transaction = Transaction(addressSource.addressId, addressDestination.addressId, amount = 100d, nonce = 0)
       transactionSigned <- EitherT(transaction.sign(kpSource.getPrivate)(cripto)).rethrowT
-      transactionIdAddressId = TransactionIdAddressId(TransactionId(transactionSigned.hash.v), addressSource.addressId)
+      transactionIdAddressId = TransactionIdAddressId(TransactionId(transactionSigned.hash.value), addressSource.addressId)
       transactionIdAddressIdSigned <- EitherT(transactionIdAddressId.sign(kpSource.getPrivate)(cripto)).rethrowT
 
       validateRes <- transactionIdAddressIdSigned.validate(publicKeySource)(cripto).rethrow

@@ -8,6 +8,16 @@ import io.github.nandotorterolo.models.TransactionSigned
 
 trait BlocksStorage[F[_]] {
 
+  /**
+   * Insert a block
+   * In case of genesis block, no relationship with parent block is added
+   * In other case, a relationship with parent block is created.
+   * For each transaction, a new Transaction is created on Transaction storage
+   * For each transaction, a pre condition is required, source and destion accounts must exist on Account Storage
+   * @param block block
+   * @param txs transactions
+   * @return
+   */
   def insert(block: BlockSigned, txs: Vector[TransactionSigned]): F[Either[ModelThrowable, BlockSigned]]
 
   /**
@@ -17,9 +27,12 @@ trait BlocksStorage[F[_]] {
    */
   def getAtSequenceNumber(height: Int): F[Option[BlockSigned]]
 
+  /**
+   * Get block by id
+   * @param blockId block id
+   * @return
+   */
   def get(blockId: BlockId): F[Either[ModelThrowable, Block]]
-
-  def close(): F[Unit]
 
   /**
    * is the block chain empty

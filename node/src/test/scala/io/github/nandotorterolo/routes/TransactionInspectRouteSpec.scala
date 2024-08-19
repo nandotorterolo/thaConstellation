@@ -39,7 +39,7 @@ class TransactionInspectRouteSpec extends CatsEffectSuite {
       transaction = Transaction(addressSource.addressId, addressDestination.addressId, 1, 1)
       transactionSigned <- EitherT(transaction.sign(kpSource.getPrivate)(cripto)).rethrowT
 
-      transactionIdAddressId = TransactionIdAddressId(TransactionId(transactionSigned.hash.v), addressSource.addressId)
+      transactionIdAddressId = TransactionIdAddressId(TransactionId(transactionSigned.hash.value), addressSource.addressId)
       transactionIdAddressIdSigned <- EitherT(transactionIdAddressId.sign(kpSource.getPrivate)(cripto)).rethrowT
 
       request: Request[IO] = {
@@ -87,7 +87,7 @@ class TransactionInspectRouteSpec extends CatsEffectSuite {
       transactionSigned <- EitherT(transaction.sign(kpSource.getPrivate)(cripto)).rethrowT
 
       // other account is asking for a transaction
-      transactionIdAddressId = TransactionIdAddressId(TransactionId(transactionSigned.hash.v), addressOther.addressId)
+      transactionIdAddressId = TransactionIdAddressId(TransactionId(transactionSigned.hash.value), addressOther.addressId)
       transactionIdAddressIdSigned <- EitherT(transactionIdAddressId.sign(kpOther.getPrivate)(cripto)).rethrowT
 
       request: Request[IO] = {

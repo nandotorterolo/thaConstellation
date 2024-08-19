@@ -2,7 +2,7 @@ package io.github.nandotorterolo.crypto
 
 import scodec.bits.ByteVector
 
-case class Hash(v: ByteVector)
+case class Hash(value: ByteVector)
 
 object Hash {
   def apply(v: Array[Byte]): Hash = Hash(ByteVector(v))

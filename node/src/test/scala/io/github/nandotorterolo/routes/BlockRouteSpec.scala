@@ -37,7 +37,7 @@ class BlockRouteSpec extends CatsEffectSuite {
 
         block = Block(BlockId(ByteVector.fill(20)(0)), 0, Vector.empty)
         blockSigned <- EitherT(block.sign(kp.getPrivate)(cripto)).rethrowT
-        blockId = BlockId(blockSigned.hash.v)
+        blockId = BlockId(blockSigned.hash.value)
 
         request: Request[IO] = {
           val chunk = Chunk.array(Codec[BlockId].encode(blockId).require.bytes.toArray)

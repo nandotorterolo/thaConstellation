@@ -233,13 +233,16 @@ TODO: dockerization of the service
 [Arcade DB](https://docs.arcadedb.com/) server is running embedded and the Studio tool published on http://localhost:2480
 
 - 3 graph schema were defined, accounts, transaction and block
-- transactions are communicated with blocks using bidirectional edge
-- blocks are communcated with the parent block using bidirectional edge
+- transactions are communicated with blocks using edge
+- blocks are communicated with the parent block using edge
+- accounts are communicated with transactions with 2 edge, hasSource and hasDestination 
 - In red you can see the genesis block with height 0
 
-![img_1.png](img_1.png)
+![img_1.png](imgs/img_1.png)
 
-![img.png](img.png)
+![img.png](imgs/img.png)
+
+![img.png](imgs/img_2.png)
 
 
 #### Could this project be extended for production readiness.

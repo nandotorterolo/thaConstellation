@@ -3,16 +3,16 @@ package io.github.nandotorterolo.node.storage
 import cats.effect.Async
 import cats.implicits._
 import com.arcadedb.database.Database
+import com.arcadedb.graph.Vertex
 import io.github.nandotorterolo.models.Account
 import io.github.nandotorterolo.models.AccountSigned
-import io.github.nandotorterolo.models.Address
 import io.github.nandotorterolo.models.AddressId
+import io.github.nandotorterolo.models.TransactionSigned
 import io.github.nandotorterolo.node.interfaces.AccountsStorage
+import io.github.nandotorterolo.node.storage.arcadeDB.vertex.AccountVertex
+import io.github.nandotorterolo.node.storage.arcadeDB.vertex.TransactionVertex
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.typelevel.log4cats.Logger
-import scodec.bits.ByteVector
-import scodec.Attempt
-import ArcadeDB._
 
 class AccountsArcadeDBImpl[F[_]: Async](db: Database) extends AccountsStorage[F] {
 
@@ -21,55 +21,56 @@ class AccountsArcadeDBImpl[F[_]: Async](db: Database) extends AccountsStorage[F]
   override def insert(accountSigned: AccountSigned): F[Boolean] = {
 
     Async[F]
-      .delay { AccountSigned.codec.encode(accountSigned) }
-      .flatMap {
-        case Attempt.Successful(value) =>
-          Async[F]
-            .delay {
-
-              db.begin()
-              db.newVertex(AccountVertexName)
-                .set("key", accountSigned.message.address.addressId.value.toBase58)
-                .set("balance", accountSigned.message.balance)
-                .set("latestUsedNonce", accountSigned.message.latestUsedNonce)
-                .set("address", accountSigned.message.address.addressId.value.toArray)
-                .set("publicKey", accountSigned.message.address.publicKey.toArray)
-                .set("value", value.toByteArray)
-                .save()
-
-              db.commit()
-            }
-            .map(_ => true)
-            .recoverWith {
-              case ex: Exception =>
-                db.rollback()
-                logger.warn(s"ex $ex").flatMap(_ => false.pure[F])
-
-            }
-        case Attempt.Failure(cause) => false.pure[F].flatTap(_ => Logger[F].warn(cause.message))
+      .delay {
+        db.begin()
+        AccountVertex.encode(accountSigned)(db).save()
+        db.commit()
       }
-
+      .map(_ => true)
+      .recoverWith {
+        case ex: Exception =>
+          db.rollback()
+          logger.warn(s"ex $ex").flatMap(_ => false.pure[F])
+      }
   }
 
-  override def contains(accountId: AddressId): F[Boolean] = Async[F].delay {
-    db.lookupByKey(AccountVertexName, "key", accountId.value.toBase58).hasNext
-  }
+  override def contains(id: AddressId): F[Boolean] =
+    AccountVertex.lookup(id.value.toBase58)(db).map(_.isDefined)
 
-  override def close(): F[Unit] = Async[F].delay { db.close() }
+  override def get(id: AddressId): F[Option[Account]] =
+    AccountVertex.lookup(id.value.toBase58)(db).map(_.map(_.message))
 
-  override def get(accountId: AddressId): F[Option[Account]] =
+  override def getSourceTransactions(id: AddressId): F[Vector[TransactionSigned]] = {
     Async[F].delay {
-      val r = db.lookupByKey(AccountVertexName, "key", accountId.value.toBase58)
-      if (r.hasNext) {
-        val vertex = r.next().asVertex(true)
-        Account(
-          address = Address(AddressId(ByteVector(vertex.getBinary("address"))), ByteVector(vertex.getBinary("publicKey"))),
-          balance = vertex.getDouble("balance"),
-          latestUsedNonce = vertex.getInteger("latestUsedNonce")
-        ).some
-      } else None
-
+      val query = db.query(
+        "sql",
+        s"MATCH {type: Account, as:a, where: (key ='${id.value.toBase58}')}.in('hasSource'){type: Transaction, as: transaction} RETURN transaction"
+      )
+      val response = new scala.collection.mutable.ArrayBuffer[TransactionSigned]()
+      // todo handle as Stream
+      while (query.hasNext) {
+        response.addOne(TransactionVertex.decode(query.next().getProperty[Vertex]("transaction")))
+      }
+      response.toVector
     }
+
+  }
+
+  override def getDestinationTransactions(id: AddressId): F[Vector[TransactionSigned]] = {
+    Async[F].delay {
+      val query = db.query(
+        "sql",
+        s"MATCH {type: Account, as:a, where: (key ='${id.value.toBase58}')}.in('hasDestination'){type: Transaction, as: transaction} RETURN transaction"
+      )
+      val response = new scala.collection.mutable.ArrayBuffer[TransactionSigned]()
+      // todo handle as Stream
+      while (query.hasNext) {
+        response.addOne(TransactionVertex.decode(query.next().getProperty[Vertex]("transaction")))
+      }
+      response.toVector
+    }
+
+  }
 }
 
 object AccountsArcadeDBImpl {
