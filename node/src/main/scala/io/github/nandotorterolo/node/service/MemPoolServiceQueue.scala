@@ -46,9 +46,9 @@ class MemPoolServiceQueue[F[_]: Async](
 
       head <- EitherT(storageService.getBlockHead)
       block = Block(
-        priorBlock = BlockId(head.hash.v),
+        priorBlock = BlockId(head.hash.value),
         sequenceNumber = head.message.sequenceNumber + 1,
-        transactions = validTxs.map(_.hash.v).map(TransactionId(_))
+        transactions = validTxs.map(_.hash.value).map(TransactionId(_))
       )
 
       privateKey <- EitherT(serverCredentials.getPrivateKey)

@@ -30,9 +30,9 @@ trait Signed[A] {
         Try(new SHA3.Digest512().digest(encode.toByteArray)).toEither.left.map(err => Message(s"$err"))
       )
 
-      _ <- EitherT.cond(hash.v.compareTo(ByteVector(hashFromEncode)) == 0, (), Message(s"Hash provided and calculated does not match."))
+      _ <- EitherT.cond(hash.value.compareTo(ByteVector(hashFromEncode)) == 0, (), Message(s"Hash provided and calculated does not match."))
 
-      isValid <- EitherT(crypto.validateSignature(hashFromEncode, publicKey, signature.v.toArray))
+      isValid <- EitherT(crypto.validateSignature(hashFromEncode, publicKey, signature.value.toArray))
 
     } yield isValid).value
   }

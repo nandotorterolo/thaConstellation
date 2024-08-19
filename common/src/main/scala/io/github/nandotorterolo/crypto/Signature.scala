@@ -2,7 +2,7 @@ package io.github.nandotorterolo.crypto
 
 import scodec.bits.ByteVector
 
-case class Signature(v: ByteVector)
+case class Signature(value: ByteVector)
 
 object Signature {
   def apply(v: Array[Byte]): Signature = Signature(ByteVector(v))

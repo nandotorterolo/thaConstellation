@@ -22,7 +22,7 @@ object AddressIdSigned {
 
   implicit val encoder: Encoder[AddressIdSigned] = new Encoder[AddressIdSigned] {
     override def apply(a: AddressIdSigned): Json = Json.obj(
-      ("sign", Json.fromString(a.signature.v.toBase58)),
+      ("sign", Json.fromString(a.signature.value.toBase58)),
       ("addressId", Json.fromString(a.message.value.toBase58))
     )
   }

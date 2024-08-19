@@ -5,10 +5,10 @@ import java.security.Security
 import scala.concurrent.duration.DurationInt
 
 import cats.effect.implicits.genSpawnOps
-import cats.effect.std.Console
 import cats.effect.std.Queue
 import cats.effect.Async
 import cats.effect.Resource
+import cats.effect.Sync
 import cats.syntax.all._
 import com.arcadedb.server.ArcadeDBServer
 import com.arcadedb.ContextConfiguration
@@ -27,19 +27,22 @@ import io.github.nandotorterolo.node.service.MemPoolServiceQueue
 import io.github.nandotorterolo.node.service.ServerCredentialsImpl
 import io.github.nandotorterolo.node.service.StorageServiceImpl
 import io.github.nandotorterolo.node.service.TransactionsMultipleFilterImpl
+import io.github.nandotorterolo.node.storage.arcadeDB.dsl.SchemaFactory
 import io.github.nandotorterolo.node.storage.AccountsArcadeDBImpl
-import io.github.nandotorterolo.node.storage.ArcadeDB
 import io.github.nandotorterolo.node.storage.BlocksArcadeDBImpl
 import io.github.nandotorterolo.node.storage.TransactionArcadeDBImpl
 import io.github.nandotorterolo.node.validator._
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.implicits._
-import org.http4s.server.middleware.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
+import org.typelevel.log4cats.Logger
 
 object NodeServer {
 
-  def run[F[_]: Async: Network: Console]: F[Nothing] = {
+  implicit def logger[F[_]: Sync]: Logger[F] = Slf4jLogger.getLogger[F]
+
+  def run[F[_]: Async: Network: Logger]: F[Nothing] = {
 
     val server = for {
       // required at start up
@@ -50,9 +53,8 @@ object NodeServer {
       arcadeDBServer = new ArcadeDBServer(new ContextConfiguration())
       _ <- Resource.make(Async[F].blocking(arcadeDBServer.start()))(_ => Async[F].blocking(arcadeDBServer.stop()))
 
-      arcade = ArcadeDB.make[F]()
-      db <- Resource.eval(Async[F].blocking(arcadeDBServer.getOrCreateDatabase(ArcadeDB.DbName)).attempt).rethrow
-      _  <- Resource.eval(arcade.createSchemas(db).attempt).rethrow
+      db <- Resource.eval(Async[F].blocking(arcadeDBServer.getOrCreateDatabase("Node")).attempt).rethrow
+      _ <- Resource.eval(SchemaFactory.make(db.getSchema)).rethrow
 
       accountsStorage    = AccountsArcadeDBImpl.build[F](db)
       blocksStorage      = BlocksArcadeDBImpl.build[F](db)
@@ -78,10 +80,10 @@ object NodeServer {
         Resource.eval {
           if (isEmpty) {
             for {
-              _ <- Console[F].println(s"The chain is empty:").attempt
+              _ <- Logger[F].info(s"The chain is empty:").attempt
               _ <- storageService.createGenesisBlock()
               _ <- storageService.createServerAccount()
-              _ <- Console[F].println(s"Genesis block and account server, were created.").attempt
+              _ <- Logger[F].info(s"Genesis block and account server, were created.").attempt
             } yield ()
           } else { Async[F].unit }
         }
@@ -89,21 +91,21 @@ object NodeServer {
 
       // TODO Console debug code, remove it later
       _ <- Resource.eval(blocksStorage.getAtSequenceNumber(0).flatMap {
-        case Some(b) => Console[F].println(show"Root chain: $b")
-        case _       => Console[F].println(show"Error!")
+        case Some(b) => Logger[F].info(show"Root chain: $b")
+        case _       => Logger[F].error(show"Error!")
       })
       // TODO Console debug code, remove it later
       _ <- Resource.eval(storageService.getServerAccount.flatMap {
         case Right(accountSigned) =>
-          Console[F].println(show"Server Account Address: $accountSigned")
-        case Left(s) => Console[F].println(show"Error: $s")
+          Logger[F].info(show"Server Account Address: $accountSigned")
+        case Left(s) => Logger[F].error(show"Error: $s")
       })
 
       queue <- Resource.eval(Queue.bounded[F, TransactionSigned](10))
       pool = new MemPoolServiceQueue(queue, storageService, tmf, serverCredentials, cripto)
 
       // Print information on console about the current mempool size
-      _ <- (Async[F].sleep(5.seconds) >> queue.size.flatMap(i => Console[F].println(s"Mempool Size: $i"))).foreverM.background.void.start
+      _ <- (Async[F].sleep(5.seconds) >> queue.size.flatMap(i => Logger[F].info(s"Mempool Size: $i"))).foreverM.background.void.start
 
       // Deque elements and try to pack a block, Passing None will try to dequeue the whole queue.
       _ <- (Async[F]
@@ -121,7 +123,7 @@ object NodeServer {
             <+> HealthRoute.route[F](healthService)
         ).orNotFound
 
-      finalHttpApp = Logger.httpApp(true, true)(httpApp)
+      finalHttpApp = org.http4s.server.middleware.Logger.httpApp(true, true)(httpApp)
 
       _ <-
         EmberServerBuilder

@@ -10,3 +10,10 @@ hs_err_pid*
 /project/target/
 /db/
 /ArcadeDb/Node/
+/cli/target/
+/common/target/
+/node/config/
+/node/log/
+/node/target/
+/config/
+/log/

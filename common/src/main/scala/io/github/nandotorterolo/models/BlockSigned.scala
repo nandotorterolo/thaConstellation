@@ -15,7 +15,7 @@ object BlockSigned {
 
   implicit val showImpl: Show[BlockSigned] =
     Show.show(b => s"""
-                      |blockId: ${b.hash.v.toBase58}
+                      |blockId: ${b.hash.value.toBase58}
                       |${b.message.show}""".stripMargin)
 
   implicit val codec: scodec.Codec[BlockSigned] =
@@ -23,8 +23,8 @@ object BlockSigned {
 
   implicit val encodeBlock: Encoder[BlockSigned] = new Encoder[BlockSigned] {
     override def apply(b: BlockSigned): Json = Json.obj(
-      ("hash", Json.fromString(b.hash.v.toBase58)),
-      ("sign", Json.fromString(b.signature.v.toBase58)),
+      ("hash", Json.fromString(b.hash.value.toBase58)),
+      ("sign", Json.fromString(b.signature.value.toBase58)),
       ("address", b.message.asJson)
     )
   }

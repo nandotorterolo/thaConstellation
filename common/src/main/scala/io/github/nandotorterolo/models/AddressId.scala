@@ -43,7 +43,7 @@ object AddressId {
 
   def apply(str: String): AddressId = {
     val b = ByteVector.fromValidBase58(str)
-//    require(b.size == 20)
+    require(b.size == 20)
     AddressId(b)
   }
 

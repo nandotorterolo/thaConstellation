@@ -21,7 +21,7 @@ object TransactionSigned {
 
   implicit val encoder: Encoder[TransactionSigned] = new Encoder[TransactionSigned] {
     override def apply(b: TransactionSigned): Json = Json.obj(
-      ("hash", Json.fromString(b.hash.v.toBase58)),
+      ("hash", Json.fromString(b.hash.value.toBase58)),
 //      ("sign", Json.fromString(b.signature.v.toBase58)),
       ("transaction", b.message.asJson)
     )
