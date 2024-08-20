@@ -7,6 +7,7 @@ import io.circe.syntax.EncoderOps
 import io.github.nandotorterolo.crypto.Cripto
 import io.github.nandotorterolo.models.ModelThrowable
 import io.github.nandotorterolo.models.ModelThrowable.EntityNotFound
+import io.github.nandotorterolo.models.ModelThrowable.InvalidRequestParam
 import io.github.nandotorterolo.models.ModelThrowable.Message
 import io.github.nandotorterolo.models.ModelThrowable.SignatureValidation
 import io.github.nandotorterolo.models.TransactionIdAddressIdSigned
@@ -16,7 +17,7 @@ import org.http4s.dsl.Http4sDsl
 import org.http4s.HttpRoutes
 import scodec.bits.ByteVector
 
-object TransactionInspectRoute {
+object TransactionByIdRoute {
 
   def route[F[_]: Async](
       cripto: Cripto[F],
@@ -26,7 +27,7 @@ object TransactionInspectRoute {
     import dsl._
     HttpRoutes.of[F] {
 
-      case req @ POST -> Root / "transaction" / "inspect" =>
+      case req @ POST -> Root / "transaction" / "byId" =>
         val response = for {
 
           txIdAddressIdSigned <-
@@ -36,7 +37,7 @@ object TransactionInspectRoute {
                 .map(_.bits)
                 .map(TransactionIdAddressIdSigned.codec.decode)
                 .map(_.toEither)
-            ).leftMap(_ => Message("InvalidRequestParam"))
+            ).leftMap(_ => InvalidRequestParam: ModelThrowable)
 
           transaction <- EitherT(storage.getTransaction(txIdAddressIdSigned.value.message.transactionId))
 
@@ -62,7 +63,8 @@ object TransactionInspectRoute {
 
         response.value
           .flatMap {
-            case Right(t)                  => Ok(show"${t.asJson.noSpaces}")
+            case Right(t)                  => Ok(t.asJson)
+            case Left(InvalidRequestParam) => BadRequest(show"$InvalidRequestParam")
             case Left(SignatureValidation) => Forbidden(show"$SignatureValidation")
             case Left(EntityNotFound)      => NotFound(show"$EntityNotFound")
             case Left(Message(s))          => InternalServerError(s)

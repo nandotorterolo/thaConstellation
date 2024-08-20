@@ -9,6 +9,7 @@ import cats.effect.IOApp
 import cats.effect.Resource
 import cats.implicits._
 import cli.commands._
+import cli.Command._
 import com.typesafe.config.ConfigFactory
 import fs2.io.file.Path
 import io.github.nandotorterolo.crypto.Cripto
@@ -17,69 +18,56 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider
 
 object Cli extends IOApp.Simple {
 
-  sealed abstract class CliCommand
-  object CliCommand {
-    case object CliQuit         extends CliCommand
-    case object CliGenerateKP   extends CliCommand
-    case object CliTransaction  extends CliCommand
-    case object CliRegistration extends CliCommand
-    case object CliBalance      extends CliCommand
-    case object CliBlock        extends CliCommand
-    case object CliInspectTx    extends CliCommand
-    case object CliHelp         extends CliCommand
-    case object CliInspect      extends CliCommand
-  }
-
-  private implicit val c: Console[IO] = Console.make[IO]
-
+  private implicit val c: Console[IO]     = Console.make[IO]
   private implicit val cripto: Cripto[IO] = EcdsaBCEncryption.build[IO]
   private implicit val pathConfig: Path   = Path(ConfigFactory.load().getString("cli.path"))
 
   private val readCommand: CommandT[IO, CliCommand] = {
     val res = for {
-      _ <- write[IO]("Enter option. [inspect | gen | tx | reg | bal | getBlock | getTx | help | quit]")
-      _ = Security.addProvider(new BouncyCastleProvider())
+      _ <- write[IO]("Enter option. [account | transaction | block | help | quit]")
       r <- read[IO]
     } yield r
     res.semiflatMap {
-      case "quit" | "exit"           => CliCommand.CliQuit.some.widen[CliCommand].pure[IO]
-      case "gen" | "generateKeyPair" => CliCommand.CliGenerateKP.some.widen[CliCommand].pure[IO]
-      case "tx" | "transaction"      => CliCommand.CliTransaction.some.widen[CliCommand].pure[IO]
-      case "reg" | "registration"    => CliCommand.CliRegistration.some.widen[CliCommand].pure[IO]
-      case "bal" | "balance"         => CliCommand.CliBalance.some.widen[CliCommand].pure[IO]
-      case "block" | "getBlock"      => CliCommand.CliBlock.some.widen[CliCommand].pure[IO]
-      case "getTx" | "inspectTx"     => CliCommand.CliInspectTx.some.widen[CliCommand].pure[IO]
-      case "inspect"                 => CliCommand.CliInspect.some.widen[CliCommand].pure[IO]
-      case "help"                    => CliCommand.CliHelp.some.widen[CliCommand].pure[IO]
-      case other                     => c.println(s"Invalid option: $other").as(none[CliCommand])
+      case "account"             => CliCommand.CliAccountMenu.some.widen[CliCommand].pure[IO]
+      case "transaction"         => CliCommand.CliTransactionMenu.some.widen[CliCommand].pure[IO]
+      case "block"               => CliCommand.CliBlockMenu.some.widen[CliCommand].pure[IO]
+      case "help"                => CliCommand.CliHelp.some.widen[CliCommand].pure[IO]
+      case "quit" | "exit" | "q" => CliCommand.CliQuit.some.widen[CliCommand].pure[IO]
+      case other                 => c.println(s"Invalid option: $other").as(none[CliCommand])
     }.untilDefinedM
-
   }
 
   private def handleCommand(cliCommand: CliCommand): CommandT[IO, Unit] =
     cliCommand match {
-      case CliCommand.CliQuit         => QuitCommand[IO]
-      case CliCommand.CliGenerateKP   => GenerateCommand[IO]
-      case CliCommand.CliTransaction  => TransactionCommand[IO]
-      case CliCommand.CliRegistration => RegistrationCommand[IO]
-      case CliCommand.CliBalance      => BalanceCommand[IO]
-      case CliCommand.CliBlock        => BlockCommand[IO]
-      case CliCommand.CliInspectTx    => InspectTransactionCommand[IO]
-      case CliCommand.CliHelp         => HelpCommand[IO]
-      case CliCommand.CliInspect      => InspectCommand[IO]
+      case CliCommand.CliAccountMenu     => AccountMenuCommand[IO]
+      case CliCommand.CliTransactionMenu => TransactionMenuCommand[IO]
+      case CliCommand.CliBlockMenu       => BlockMenuCommand[IO]
+      case CliCommand.CliHelp            => HelpCommand[IO](menu)
+      case CliCommand.CliQuit            => QuitCommand[IO]
+      case _                             => CommandT.commandTMonadThrow[IO].raiseError[Unit](new IllegalStateException("handle cli command miss match!"))
     }
 
   private val cliResource: Resource[IO, Unit] = {
     Sync[IO]
       .defer(
         write[IO]("CLI:").value >>
-          (readCommand >>= handleCommand).value
+          readCommand
+            .flatMap(c => handleCommand(c))
+            .value
+            .flatMapOrKeep {
+              case MenuTransaction => handleCommand(CliCommand.CliTransactionMenu).value
+              case MenuBlock       => handleCommand(CliCommand.CliBlockMenu).value
+              case MenuAccount     => handleCommand(CliCommand.CliAccountMenu).value
+            }
             .iterateWhile(_ != Command.Exit)
             .void
       )
       .toResource
   }
 
-  def run: IO[Unit] = cliResource.useForever
+  def run: IO[Unit] = {
+    Security.addProvider(new BouncyCastleProvider())
+    cliResource.useForever
+  }
 
 }

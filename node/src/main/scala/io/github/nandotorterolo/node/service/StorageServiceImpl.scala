@@ -6,6 +6,7 @@ import cats.implicits._
 import io.github.nandotorterolo.crypto.Cripto
 import io.github.nandotorterolo.models._
 import io.github.nandotorterolo.models.ModelThrowable.ConflictMessage
+import io.github.nandotorterolo.models.ModelThrowable.EntityNotFound
 import io.github.nandotorterolo.models.ModelThrowable.Message
 import io.github.nandotorterolo.node.interfaces._
 
@@ -99,6 +100,9 @@ class StorageServiceImpl[F[_]: Async](
   override def getBlock(blockId: BlockId): F[Either[ModelThrowable, Block]] =
     blocksStorage.get(blockId)
 
+  override def getBlockBySeqNumber(seqNumber: Int): F[Either[ModelThrowable, Block]] =
+    blocksStorage.getAtSequenceNumber(seqNumber).map(_.toRight(EntityNotFound).map(_.message))
+
   override def saveAccount(accountSigned: AccountSigned): F[Either[ModelThrowable, AccountSigned]] =
     accountsStorage.contains(accountSigned.message.address.addressId).flatMap {
       case true => (ConflictMessage("ExistingAddress"): ModelThrowable).asLeft[AccountSigned].pure[F]
@@ -111,6 +115,14 @@ class StorageServiceImpl[F[_]: Async](
 
   override def getAccount(accountId: AddressId): F[Option[Account]] = {
     accountsStorage.get(accountId)
+  }
+
+  override def getTransactionByAccount(accountId: AddressId): F[Either[ModelThrowable, Vector[TransactionSigned]]] = {
+    (
+      accountsStorage.getSourceTransactions(accountId),
+      accountsStorage.getDestinationTransactions(accountId)
+    ).mapN(_ ++ _).attempt.map(_.leftMap(th => Message(s"Error Service ${th.getMessage}"): ModelThrowable))
+
   }
 
   def getTransaction(transactionId: TransactionId): F[Either[ModelThrowable, Transaction]] =

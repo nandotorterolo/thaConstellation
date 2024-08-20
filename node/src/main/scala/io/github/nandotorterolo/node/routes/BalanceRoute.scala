@@ -3,6 +3,7 @@ package io.github.nandotorterolo.node.routes
 import cats.data.EitherT
 import cats.effect.Async
 import cats.implicits._
+import io.circe.syntax.EncoderOps
 import io.github.nandotorterolo.crypto.Cripto
 import io.github.nandotorterolo.models.AddressIdSigned
 import io.github.nandotorterolo.models.ModelThrowable
@@ -48,7 +49,7 @@ object BalanceRoute {
         } yield account
         response.value
           .flatMap {
-            case Right(account)            => Ok(account)
+            case Right(account)            => Ok(account.asJson)
             case Left(InvalidRequestParam) => BadRequest(show"$InvalidRequestParam")
             case Left(SignatureValidation) => BadRequest(show"$SignatureValidation")
             case Left(EntityNotFound)      => NotFound(show"$EntityNotFound")

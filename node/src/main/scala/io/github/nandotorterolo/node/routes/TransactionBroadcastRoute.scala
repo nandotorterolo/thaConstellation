@@ -5,6 +5,7 @@ import cats.effect.Async
 import cats.implicits._
 import io.circe.syntax.EncoderOps
 import io.github.nandotorterolo.models.ModelThrowable
+import io.github.nandotorterolo.models.ModelThrowable.InvalidRequestParam
 import io.github.nandotorterolo.models.ModelThrowable.Message
 import io.github.nandotorterolo.models.TransactionSigned
 import io.github.nandotorterolo.node.interfaces._
@@ -37,7 +38,7 @@ object TransactionBroadcastRoute {
                 .map(_.bits)
                 .map(TransactionSigned.codec.decode)
                 .map(_.toEither)
-            ).leftMap(_ => Message("InvalidRequestParam"))
+            ).leftMap(_ => InvalidRequestParam: ModelThrowable)
 
           tx = txSigned.value.message
 
@@ -51,8 +52,9 @@ object TransactionBroadcastRoute {
 
         } yield tx
         response.value.flatMap {
-          case Left(error) => BadRequest(show"$error")
-          case Right(tx)   => Ok(show"${tx.asJson}")
+          case Left(InvalidRequestParam) => BadRequest(show"$InvalidRequestParam")
+          case Left(error)               => BadRequest(show"$error")
+          case Right(tx)                 => Ok(tx.asJson)
         }
 
     }

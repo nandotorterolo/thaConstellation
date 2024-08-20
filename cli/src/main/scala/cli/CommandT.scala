@@ -17,27 +17,36 @@ final case class CommandT[F[_], A](value: F[Command[A]]) {
   def flatMapF[B](f: A => F[Command[B]])(implicit F: Monad[F]): CommandT[F, B] =
     CommandT(
       F.flatMap(value) {
-        case Command.Success(a) => f(a)
-        case Command.Exit       => F.pure(Command.Exit)
-        case Command.Menu       => F.pure(Command.Menu)
+        case Command.Success(a)      => f(a)
+        case Command.Exit            => F.pure(Command.Exit)
+        case Command.Menu            => F.pure(Command.Menu)
+        case Command.MenuBlock       => F.pure(Command.MenuBlock)
+        case Command.MenuAccount     => F.pure(Command.MenuAccount)
+        case Command.MenuTransaction => F.pure(Command.MenuTransaction)
       }
     )
 
   def semiflatMap[B](f: A => F[B])(implicit F: Monad[F]): CommandT[F, B] =
     CommandT(
       F.flatMap(value) {
-        case Command.Success(a) => f(a).map(Command.success)
-        case Command.Exit       => F.pure(Command.Exit)
-        case Command.Menu       => F.pure(Command.Menu)
+        case Command.Success(a)      => f(a).map(Command.success)
+        case Command.Exit            => F.pure(Command.Exit)
+        case Command.Menu            => F.pure(Command.Menu)
+        case Command.MenuBlock       => F.pure(Command.MenuBlock)
+        case Command.MenuAccount     => F.pure(Command.MenuAccount)
+        case Command.MenuTransaction => F.pure(Command.MenuTransaction)
       }
     )
 
   def subflatMap[B](f: A => Command[B])(implicit F: Monad[F]): CommandT[F, B] =
     CommandT(
       F.flatMap(value) {
-        case Command.Success(a) => f(a).pure[F]
-        case Command.Exit       => F.pure(Command.Exit)
-        case Command.Menu       => F.pure(Command.Menu)
+        case Command.Success(a)      => f(a).pure[F]
+        case Command.Exit            => F.pure(Command.Exit)
+        case Command.Menu            => F.pure(Command.Menu)
+        case Command.MenuBlock       => F.pure(Command.MenuBlock)
+        case Command.MenuAccount     => F.pure(Command.MenuAccount)
+        case Command.MenuTransaction => F.pure(Command.MenuTransaction)
       }
     )
 }
@@ -62,9 +71,12 @@ object CommandT {
       override def flatMap[A, B](fa: CommandT[F, A])(f: A => CommandT[F, B]): CommandT[F, B] =
         CommandT(
           Monad[F].flatMap(fa.value) {
-            case Command.Success(a) => f(a).value
-            case Command.Exit       => Monad[F].pure(Command.Exit)
-            case Command.Menu       => Monad[F].pure(Command.Menu)
+            case Command.Success(a)      => f(a).value
+            case Command.Exit            => Monad[F].pure(Command.Exit)
+            case Command.Menu            => Monad[F].pure(Command.Menu)
+            case Command.MenuBlock       => Monad[F].pure(Command.MenuBlock)
+            case Command.MenuAccount     => Monad[F].pure(Command.MenuAccount)
+            case Command.MenuTransaction => Monad[F].pure(Command.MenuTransaction)
           }
         )
 
@@ -72,6 +84,9 @@ object CommandT {
         CommandT(
           f(a).value.flatMap {
             case Command.Menu              => Command.menu[B].pure[F]
+            case Command.MenuBlock         => Command.menuBlock[B].pure[F]
+            case Command.MenuAccount       => Command.menuAccount[B].pure[F]
+            case Command.MenuTransaction   => Command.menuTransaction[B].pure[F]
             case Command.Exit              => Command.exit[B].pure[F]
             case Command.Success(Right(b)) => Command.success(b).pure[F]
             case Command.Success(Left(a))  => tailRecM(a)(f).value

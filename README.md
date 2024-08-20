@@ -72,7 +72,7 @@ The cli will create a couple of files under a folder defined by config.
 
 ```
 CLI:
-Enter option. [inspect | gen | tx | reg | bal | block | help | quit]
+Enter option. [account | transaction | block | help | quit]
 > gen
 Lets generate a private-public key pair.
 Enter Key name parameter. (Ex: )
@@ -89,7 +89,7 @@ You could continue with registration step
 Register and account on the Bank. You will receive a gift of 100.
 
 ```
-Enter option. [inspect | gen | tx | reg | bal | block | help | quit]
+Enter option. [gen | reg | inspect | bal]
 > reg
 Lets register an Address
 Enter Private Key name parameter. (Ex: )
@@ -105,7 +105,7 @@ Given an address and a private key, obtain details of an account
 You will be rejected if the provided Private key matches the address/account
 
 ```
-Enter option. [inspect | gen | tx | reg | bal | block | help | quit]
+Enter option. [gen | reg | inspect | bal]
 > bal
 Get balance from an Address
 Enter <SOURCE> Address parameter. (Ex: JpE3CyJtqsJ35cE6U1uq7RKXLAg)
@@ -120,7 +120,7 @@ Enter Private Key: parameter. (Ex: id)
 Sometimes you register an account, for forget your address, this command will show you the address if you provide a public key
 
 ```
-Enter option. [inspect | gen | tx | reg | bal | block | help | quit]
+Enter option. [gen | reg | inspect | bal]
 > inspect
 Lets Inspect a PUBLIC key
 Enter Public Key name parameter. (Ex: a.pub)
@@ -134,15 +134,8 @@ Your address: 3FTBbJzQptLTbNVZyCvNQeScRcSQ
 - the promt will ask, source, destination address, amount and nonce, finally provide your user_a private key to sign the transaction
 
 ```
-Enter option. [inspect | gen | tx | reg | bal | block | help | quit]
-> inspect
-Lets Inspect a PUBLIC key
-Enter Public Key name parameter. (Ex: a.pub)
-> user_b.pub
-Your address: 4B7Y4UF5w2Zu7cMQcgJ1g9iFUa8U
-
-Enter option. [inspect | gen | tx | reg | bal | block | help | quit]
-> tx
+Enter option. [create | byId]
+> create
 Lets create a Transaction
 Enter <DESTINATION> Address parameter. (Ex: 3FTBbJzQptLTbNVZyCvNQeScRcSQ)
 > 4B7Y4UF5w2Zu7cMQcgJ1g9iFUa8U
@@ -159,12 +152,12 @@ send transaction? [ y | n ]
 ```
 
 ### Get a Block
-Display block information givven the blockId (hash)
+Display block information given the blockId (hash)
 
 ```
 CLI:
-Enter option. [inspect | gen | tx | reg | bal | block | help | quit]
-> block
+Enter option. [byId | bySN]
+> byId
 Get block information
 Enter Block Id parameter. (Ex: base 58)
 > 5YBCf1CzwJocQeYhYVfoeyBwAL3VeW6wpXkQLDbjU5L6NVDxLvcTm6hidtQmCj8XZZam2qRzwX19u9k1rdmAdWpB
@@ -177,8 +170,8 @@ You only can obtain a transaction if your account was the source, or destination
 
 ```
 CLI:
-Enter option. [inspect | gen | tx | reg | bal | block | help | quit]
-> inspectTx
+Enter option. [create | byId]
+> byId
 Inspect transaction information
 Enter Transaction Id parameter. (Ex: 5YBCf1CzwJocQeYhYVfoeyBwAL3VeW6wpXkQLDbjU5L6NVDxLvcTm6hidtQmCj8XZZam2qRzwX19u9k1rdmAdWpB)
 > 3b8wL11hCj9Ut2oJtB8QgmRbC8dH35Ubj5J5YXMsStDfVC5CnWrgJjDBHdWHp9AFug5NDSo4ppHpfSZ3abFR3PiT

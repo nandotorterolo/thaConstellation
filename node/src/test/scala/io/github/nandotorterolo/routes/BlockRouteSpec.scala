@@ -28,7 +28,7 @@ class BlockRouteSpec extends CatsEffectSuite {
     ()
   }
 
-  test("BlockRouteSpec returns status code 200") {
+  test("Get Block by Id returns status code 200") {
 
     val response: IO[Response[IO]] = {
 
@@ -54,7 +54,32 @@ class BlockRouteSpec extends CatsEffectSuite {
     }
 
     assertIO(response.map(_.status), Status.Ok)
-    assertIO(response.flatMap(_.as[String]), """"{\"priorBlock\":\"11111111111111111111\",\"sequenceNumber\":0,\"transactions\":\"\"}"""".stripMargin)
+    assertIO(response.flatMap(_.as[String]), """{"priorBlock":"11111111111111111111","sequenceNumber":0,"transactions":""}""".stripMargin)
+  }
+
+  test("Get Block by Seq Number returns status code 200") {
+
+    val response: IO[Response[IO]] = {
+
+      for {
+        kp <- cripto.getKeyPair.rethrow
+
+        block = Block(BlockId(ByteVector.fill(20)(0)), 0, Vector.empty)
+        blockSigned <- EitherT(block.sign(kp.getPrivate)(cripto)).rethrowT
+        blockId = BlockId(blockSigned.hash.value)
+
+        request: Request[IO] = {
+          Request[IO]()
+            .withUri(uri"/block/0")
+            .withMethod(Method.GET)
+        }
+
+        res <- BlockRoute.route(storageMock(blocks = Map(blockId -> block))).orNotFound(request)
+      } yield res
+    }
+
+    assertIO(response.map(_.status), Status.Ok)
+    assertIO(response.flatMap(_.as[String]), """{"priorBlock":"11111111111111111111","sequenceNumber":0,"transactions":""}""".stripMargin)
   }
 
 }

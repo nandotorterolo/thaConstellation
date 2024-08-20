@@ -12,7 +12,7 @@ import org.http4s.ember.client.EmberClientBuilder
 import org.http4s.headers.`Content-Type`
 import scodec.bits.ByteVector
 
-class BlockCommand[F[_]: Async: Console] {
+class BlockByIdCommand[F[_]: Async: Console] {
 
   private val command: CommandT[F, Unit] = {
     val res = for {
@@ -29,7 +29,7 @@ class BlockCommand[F[_]: Async: Console] {
         case m: ModelThrowable => write[F](show"Error: $m")
         case e: Throwable      => write[F](s"Error: ${e.getMessage}")
       }
-      .subflatMap(_ => Command.Menu)
+      .subflatMap(_ => Command.MenuBlock)
   }
 
   private def getBlock(blockId: BlockId): CommandT[F, Unit] = {
@@ -50,14 +50,14 @@ class BlockCommand[F[_]: Async: Console] {
         client
           .fetchAs[String](request)
           .recover { case ex: Exception => s"Error $ex" }
-          .flatMap(s => Console[F].println(s"OK: $s"))
+          .flatMap(s => Console[F].println(s"$s"))
       }
     }
   }
 
 }
 
-object BlockCommand {
+object BlockByIdCommand {
   def apply[F[_]: Async: Console]: CommandT[F, Unit] =
-    new BlockCommand[F].command
+    new BlockByIdCommand[F].command
 }

@@ -18,7 +18,7 @@ import org.http4s.ember.client.EmberClientBuilder
 import org.http4s.headers.`Content-Type`
 import scodec.Codec
 
-class RegistrationCommand[F[_]: Async: Console](cripto: Cripto[F], path: Path) {
+class AccountRegistrationCommand[F[_]: Async: Console](cripto: Cripto[F], path: Path) {
 
   private val command: CommandT[F, Unit] = {
     val res = for {
@@ -44,7 +44,7 @@ class RegistrationCommand[F[_]: Async: Console](cripto: Cripto[F], path: Path) {
         case m: ModelThrowable       => write[F](show"Error: $m")
         case e: Throwable            => write[F](s"Error: ${e.getMessage}")
       }
-      .subflatMap(_ => Command.Menu)
+      .subflatMap(_ => Command.MenuAccount)
   }
 
   def noChoice: CommandT[F, Unit] = write[F](s"bye!")
@@ -79,7 +79,7 @@ class RegistrationCommand[F[_]: Async: Console](cripto: Cripto[F], path: Path) {
   }
 }
 
-object RegistrationCommand {
+object AccountRegistrationCommand {
   def apply[F[_]: Async: Console](implicit cripto: Cripto[F], path: Path): CommandT[F, Unit] =
-    new RegistrationCommand[F](cripto, path).command
+    new AccountRegistrationCommand[F](cripto, path).command
 }

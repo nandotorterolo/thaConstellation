@@ -19,7 +19,7 @@ import org.http4s.MediaType
 import org.http4s.Method
 import org.http4s.Request
 
-class TransactionCommand[F[_]: Async: Console](cripto: Cripto[F], path: Path) {
+class TransactionCreateCommand[F[_]: Async: Console](cripto: Cripto[F], path: Path) {
 
   private val command: CommandT[F, Unit] = {
     val res = for {
@@ -65,7 +65,7 @@ class TransactionCommand[F[_]: Async: Console](cripto: Cripto[F], path: Path) {
         case m: ModelThrowable       => write[F](show"Error: $m")
         case e: Throwable            => write[F](s"Error: ${e.getMessage}")
       }
-      .subflatMap(_ => Command.Menu)
+      .subflatMap(_ => Command.MenuTransaction)
   }
 
   def noChoice: CommandT[F, Unit] = write[F](s"bye!")
@@ -102,7 +102,7 @@ class TransactionCommand[F[_]: Async: Console](cripto: Cripto[F], path: Path) {
 
 }
 
-object TransactionCommand {
+object TransactionCreateCommand {
   def apply[F[_]: Async: Console](implicit cripto: Cripto[F], path: Path): CommandT[F, Unit] =
-    new TransactionCommand[F](cripto, path).command
+    new TransactionCreateCommand[F](cripto, path).command
 }
