@@ -47,12 +47,16 @@ class RegistrationRouteSpec extends CatsEffectSuite {
 
       override def getBlock(blockId: BlockId): IO[Either[ModelThrowable, Block]] = ???
 
+      override def getBlockBySeqNumber(seqNumber: Int): IO[Either[ModelThrowable, Block]] = ???
+
       override def createGenesisBlock(): IO[Either[ModelThrowable, BlockSigned]] = ???
 
       override def saveAccount(account: AccountSigned): IO[Either[ModelThrowable, AccountSigned]] =
         accountSigned.asRight[ModelThrowable].pure[IO]
 
       override def getTransaction(transactionId: TransactionId): IO[Either[ModelThrowable, Transaction]] = ???
+
+      override def getTransactionByAccount(accountId: AddressId): IO[Either[ModelThrowable, Vector[TransactionSigned]]] = ???
 
       override def crateGiftTransaction(
           newAccount: AccountSigned
@@ -102,7 +106,7 @@ class RegistrationRouteSpec extends CatsEffectSuite {
       _ <- assertIO(res.map(_.status), Status.Ok)
       _ <- assertIO(
         res.flatMap(_.as[String]),
-        s""""{\\"account\\":{\\"address\\":\\"${address.addressId.value.toBase58}\\",\\"balance\\":0.0,\\"latestUsedNonce\\":0}}"""".stripMargin
+        s"""{"account":{"address":"${address.addressId.value.toBase58}","balance":0.0,"latestUsedNonce":0}}""".stripMargin
       )
     } yield ()
 

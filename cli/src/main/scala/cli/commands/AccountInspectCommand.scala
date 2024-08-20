@@ -11,7 +11,7 @@ import io.github.nandotorterolo.crypto.Cripto
 import io.github.nandotorterolo.models.Address
 import io.github.nandotorterolo.models.ModelThrowable
 
-class InspectCommand[F[_]: Async: Console](cripto: Cripto[F], path: Path) {
+class AccountInspectCommand[F[_]: Async: Console](cripto: Cripto[F], path: Path) {
 
   private val command: CommandT[F, Unit] = {
     val res = for {
@@ -30,11 +30,11 @@ class InspectCommand[F[_]: Async: Console](cripto: Cripto[F], path: Path) {
         case m: ModelThrowable       => write[F](show"Error: $m")
         case e: Throwable            => write[F](s"Error: ${e.getMessage}")
       }
-      .subflatMap(_ => Command.Menu)
+      .subflatMap(_ => Command.MenuAccount)
   }
 }
 
-object InspectCommand {
+object AccountInspectCommand {
   def apply[F[_]: Async: Console](implicit cripto: Cripto[F], path: Path): CommandT[F, Unit] =
-    new InspectCommand[F](cripto, path).command
+    new AccountInspectCommand[F](cripto, path).command
 }

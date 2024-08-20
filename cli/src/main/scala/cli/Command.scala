@@ -16,6 +16,18 @@ object Command {
 
   def menu[T]: Command[T] = Menu
 
+  case object MenuBlock extends Command[Nothing]
+
+  def menuBlock[T]: Command[T] = MenuBlock
+
+  case object MenuTransaction extends Command[Nothing]
+
+  def menuTransaction[T]: Command[T] = MenuTransaction
+
+  case object MenuAccount extends Command[Nothing]
+
+  def menuAccount[T]: Command[T] = MenuAccount
+
   case class Success[+T](a: T) extends Command[T]
 
   def success[T](t: T): Command[T] = Success(t)
@@ -26,16 +38,22 @@ object Command {
 
       override def flatMap[A, B](fa: Command[A])(f: A => Command[B]): Command[B] =
         fa match {
-          case Exit       => Exit
-          case Menu       => Menu
-          case Success(a) => f(a)
+          case Exit            => Exit
+          case Menu            => Menu
+          case MenuBlock       => MenuBlock
+          case MenuAccount     => MenuAccount
+          case MenuTransaction => MenuTransaction
+          case Success(a)      => f(a)
         }
 
       @tailrec
       override def tailRecM[A, B](a: A)(f: A => Command[Either[A, B]]): Command[B] =
         f(a) match {
           case Exit              => Exit
-          case Menu              => Exit
+          case Menu              => Menu
+          case MenuBlock         => MenuBlock
+          case MenuAccount       => MenuAccount
+          case MenuTransaction   => MenuTransaction
           case Success(Left(l))  => tailRecM(l)(f)
           case Success(Right(r)) => Success(r)
         }

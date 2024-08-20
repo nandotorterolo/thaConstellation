@@ -6,6 +6,8 @@ import cats.implicits._
 import io.circe.syntax.EncoderOps
 import io.github.nandotorterolo.models.BlockId
 import io.github.nandotorterolo.models.ModelThrowable
+import io.github.nandotorterolo.models.ModelThrowable.EntityNotFound
+import io.github.nandotorterolo.models.ModelThrowable.InvalidRequestParam
 import io.github.nandotorterolo.models.ModelThrowable.Message
 import io.github.nandotorterolo.node.interfaces.StorageService
 import org.http4s.circe.CirceEntityCodec._
@@ -27,16 +29,33 @@ object BlockRoute {
               .to(ByteVector)
               .map(bv => BlockId.codec.decode(bv.bits))
               .map(_.toEither)
-          ).leftMap { _ => Message("InvalidRequestParam"): ModelThrowable }
+          ).leftMap { _ => InvalidRequestParam: ModelThrowable }
 
           block <- EitherT(storage.getBlock(blockIdRequest.value))
 
         } yield block
         response.value
           .flatMap {
-            case Right(block)     => Ok(show"${block.asJson.noSpaces}")
-            case Left(Message(s)) => InternalServerError(s)
-            case Left(_)          => InternalServerError()
+            case Right(block)              => Ok(block.asJson)
+            case Left(InvalidRequestParam) => BadRequest(show"$InvalidRequestParam")
+            case Left(Message(s))          => InternalServerError(s)
+            case Left(_)                   => InternalServerError()
+          }
+          .recoverWith {
+            case _: Exception => InternalServerError()
+          }
+
+      case GET -> Root / "block" / IntVar(sequenceNumber) =>
+        val response = for {
+          block <- EitherT(storage.getBlockBySeqNumber(sequenceNumber))
+        } yield block
+        response.value
+          .flatMap {
+            case Right(block)              => Ok(block.asJson)
+            case Left(InvalidRequestParam) => BadRequest(show"$InvalidRequestParam")
+            case Left(EntityNotFound)      => NotFound("Block not found")
+            case Left(Message(s))          => InternalServerError(s)
+            case Left(other)               => InternalServerError(show"$other")
           }
           .recoverWith {
             case _: Exception => InternalServerError()

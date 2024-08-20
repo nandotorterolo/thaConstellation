@@ -12,7 +12,7 @@ import io.github.nandotorterolo.models.Address
 /**
  * Generate a Key Pair command
  */
-class GenerateCommand[F[_]: Async: Console](cripto: Cripto[F], path: Path) {
+class AccountGenerateCommand[F[_]: Async: Console](cripto: Cripto[F], path: Path) {
 
   private val command: CommandT[F, Unit] = {
     val res = for {
@@ -36,11 +36,11 @@ class GenerateCommand[F[_]: Async: Console](cripto: Cripto[F], path: Path) {
       .handleErrorWith { t: Throwable =>
         CommandT.liftF(Console[F].println(s"Error ${t.getMessage}"))
       }
-      .subflatMap(_ => Command.Menu)
+      .subflatMap(_ => Command.MenuAccount)
   }
 }
 
-object GenerateCommand {
+object AccountGenerateCommand {
   def apply[F[_]: Async: Console](implicit cripto: Cripto[F], path: Path): CommandT[F, Unit] =
-    new GenerateCommand[F](cripto, path).command
+    new AccountGenerateCommand[F](cripto, path).command
 }

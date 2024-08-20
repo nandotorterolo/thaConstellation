@@ -105,16 +105,16 @@ paths:
           schema:
             $ref: '#/definitions/Transaction'
         "400":
-          description: Invalid request parameters, Signature validation isuues, validation issued
+          description: Invalid request parameters, Signature validation issues, validation issues
         "501":
           description: "Service error: ..."
 
-  /transaction/inspect:
+  /transaction/byId:
     post:
       tags:
         - "transaction"
 
-      summary: "get a transaction"
+      summary: "get a transaction by Id"
 
       consumes:
         - "application/octet-stream"
@@ -138,7 +138,7 @@ paths:
           schema:
             $ref: '#/definitions/Transaction'
         "400":
-          description: Invalid request parameters, Signature validation isuues, validation issued
+          description: Invalid request parameters, Signature validation issues, validation issues
         "501":
           description: "Service error: ..."
 
@@ -147,7 +147,7 @@ paths:
       tags:
         - "block"
 
-      summary: "inspect a block"
+      summary: "inspect a block by Id"
 
       consumes:
         - "application/octet-stream"
@@ -171,7 +171,37 @@ paths:
           schema:
             $ref: '#/definitions/Block'
         "400":
-          description: Invalid request parameters, Signature validation isuues, validation issued
+          description: Invalid request parameters, Signature validation issues, validation issues
+        "501":
+          description: "Service error: ..."
+
+  /block/seqNumber:
+    get:
+      tags:
+        - "block"
+
+      summary: "inspect a block by sequence number"
+
+      produces:
+        - "application/json"
+
+      parameters:
+
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            type: string
+            format: string
+            example: "Valid base 58 block id with size=64"
+
+      responses:
+        "200":
+          description: "Transaction valid"
+          schema:
+            $ref: '#/definitions/Block'
+        "400":
+          description: Invalid request parameters, Signature validation issues, validation issues
         "501":
           description: "Service error: ..."
 

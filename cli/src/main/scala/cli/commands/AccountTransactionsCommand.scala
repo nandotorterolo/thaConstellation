@@ -16,33 +16,23 @@ import org.http4s._
 import org.http4s.ember.client.EmberClientBuilder
 import org.http4s.headers.`Content-Type`
 
-class BalanceCommand[F[_]: Async: Console](cripto: Cripto[F], pathConfig: Path) {
+class AccountTransactionsCommand[F[_]: Async: Console](cripto: Cripto[F], pathConfig: Path) {
 
   private val command: CommandT[F, Unit] = {
     val res = for {
-      _             <- write[F]("Get balance from an Address")
-      sourceAddress <- readParameter[F, String]("<SOURCE> Address", List("JpE3CyJtqsJ35cE6U1uq7RKXLAg"))
+      _ <- write[F]("Get transactions from an Address")
 
       keyName           <- readParameter[F, String]("Private Key:", List("id"))
       privateKeyContent <- readFile(Path(s"$pathConfig/$keyName"))
       privateKey        <- CommandT.liftF(EitherT(cripto.privateKey[F](privateKeyContent)).rethrowT)
+      publicKeyContent  <- readFile(Path(s"$pathConfig/$keyName.pub"))
+      publicKey         <- CommandT.liftF(EitherT(cripto.publicKey[F](publicKeyContent)).rethrowT)
 
-      addressId = AddressId(sourceAddress)
+      addressId = AddressId(publicKey)
 
       addressIdSigned <- CommandT.liftF(addressId.sign[F](privateKey)(cripto)).rethrow
 
-      // pre send validation.assuming that the public keys are in the same Path that private
-      publicKeyContent <- readFile(Path(s"$pathConfig/$keyName.pub"))
-      publicKey        <- CommandT.liftF(EitherT(cripto.publicKey[F](publicKeyContent)).rethrowT)
-      _ <- CommandT.liftF(addressIdSigned.validate[F](publicKey)(cripto)).flatMap {
-        case Right(true) => CommandT.liftF(Async[F].unit)
-        case _ =>
-          CommandT
-            .commandTMonadThrow[F]
-            .raiseError[Unit](new IllegalStateException("Invalid signature"))
-      }
-
-      _ <- getBalance(addressIdSigned)
+      _ <- getTransactions(addressIdSigned)
 
     } yield ()
     res
@@ -51,10 +41,10 @@ class BalanceCommand[F[_]: Async: Console](cripto: Cripto[F], pathConfig: Path) 
         case m: ModelThrowable       => write[F](show"Error: $m")
         case e: Throwable            => write[F](s"Error: ${e.getMessage}")
       }
-      .subflatMap(_ => Command.Menu)
+      .subflatMap(_ => Command.MenuAccount)
   }
 
-  private def getBalance(addressIdSigned: AddressIdSigned): CommandT[F, Unit] = {
+  private def getTransactions(addressIdSigned: AddressIdSigned): CommandT[F, Unit] = {
     val entityBody: EntityBody[F] =
       fs2.Stream
         .chunk(Chunk.array(AddressIdSigned.codec.encode(addressIdSigned).require.bytes.toArray))
@@ -62,7 +52,7 @@ class BalanceCommand[F[_]: Async: Console](cripto: Cripto[F], pathConfig: Path) 
 
     val request: Request[F] =
       Request[F]()
-        .withUri(balanceUri)
+        .withUri(transactionByAccountUri)
         .withMethod(Method.POST)
         .withContentType(`Content-Type`(MediaType.application.`octet-stream`))
         .withBodyStream(entityBody)
@@ -86,7 +76,7 @@ class BalanceCommand[F[_]: Async: Console](cripto: Cripto[F], pathConfig: Path) 
 
 }
 
-object BalanceCommand {
+object AccountTransactionsCommand {
   def apply[F[_]: Async: Console](implicit cripto: Cripto[F], path: Path): CommandT[F, Unit] =
-    new BalanceCommand[F](cripto, path).command
+    new AccountTransactionsCommand[F](cripto, path).command
 }

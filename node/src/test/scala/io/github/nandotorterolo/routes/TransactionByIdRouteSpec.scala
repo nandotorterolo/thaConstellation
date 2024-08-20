@@ -8,7 +8,7 @@ import fs2.Chunk
 import io.github.nandotorterolo.crypto.Cripto
 import io.github.nandotorterolo.crypto.EcdsaBCEncryption
 import io.github.nandotorterolo.models._
-import io.github.nandotorterolo.node.routes.TransactionInspectRoute
+import io.github.nandotorterolo.node.routes.TransactionByIdRoute
 import io.github.nandotorterolo.validators.storageMock
 import munit.CatsEffectSuite
 import org.bouncycastle.jce.provider.BouncyCastleProvider
@@ -17,7 +17,7 @@ import org.http4s.headers.`Content-Type`
 import org.http4s.implicits._
 import scodec.Codec
 
-class TransactionInspectRouteSpec extends CatsEffectSuite {
+class TransactionByIdRouteSpec extends CatsEffectSuite {
 
   val cripto: Cripto[IO] = EcdsaBCEncryption.build[IO]
 
@@ -46,18 +46,18 @@ class TransactionInspectRouteSpec extends CatsEffectSuite {
         val chunk = Chunk.array(Codec[TransactionIdAddressIdSigned].encode(transactionIdAddressIdSigned).require.bytes.toArray)
 
         Request[IO]()
-          .withUri(uri"/transaction/inspect")
+          .withUri(uri"/transaction/byId")
           .withMethod(Method.POST)
           .withContentType(`Content-Type`(MediaType.application.`octet-stream`))
           .withBodyStream(fs2.Stream.chunk(chunk).covary[IO])
       }
 
-      res = TransactionInspectRoute
+      res = TransactionByIdRoute
         .route(
           cripto,
           storageMock(
             accounts = Map(addressSource.addressId -> accountSource),
-            transactions = Map(transactionIdAddressId.transactionId -> transaction)
+            transactions = Map(TransactionId(transactionSigned.hash.value) -> transactionSigned)
           )
         )
         .orNotFound(request)
@@ -65,7 +65,7 @@ class TransactionInspectRouteSpec extends CatsEffectSuite {
       _ <- assertIO(res.map(_.status), Status.Ok)
       _ <- assertIO(
         res.flatMap(_.as[String]),
-        s""""{\\"source\\":\\"${addressSource.addressId.value.toBase58}\\",\\"destination\\":\\"${addressDestination.addressId.value.toBase58}\\",\\"amount\\":1.0,\\"nonce\\":1}"""".stripMargin
+        s"""{"source":"${addressSource.addressId.value.toBase58}","destination":"${addressDestination.addressId.value.toBase58}","amount":1.0,"nonce":1}""".stripMargin
       )
     } yield ()
   }
@@ -94,18 +94,18 @@ class TransactionInspectRouteSpec extends CatsEffectSuite {
         val chunk = Chunk.array(Codec[TransactionIdAddressIdSigned].encode(transactionIdAddressIdSigned).require.bytes.toArray)
 
         Request[IO]()
-          .withUri(uri"/transaction/inspect")
+          .withUri(uri"/transaction/byId")
           .withMethod(Method.POST)
           .withContentType(`Content-Type`(MediaType.application.`octet-stream`))
           .withBodyStream(fs2.Stream.chunk(chunk).covary[IO])
       }
 
-      res = TransactionInspectRoute
+      res = TransactionByIdRoute
         .route(
           cripto,
           storageMock(
             accounts = Map(addressOther.addressId -> accountOther),
-            transactions = Map(transactionIdAddressId.transactionId -> transaction)
+            transactions = Map(TransactionId(transactionSigned.hash.value) -> transactionSigned)
           )
         )
         .orNotFound(request)

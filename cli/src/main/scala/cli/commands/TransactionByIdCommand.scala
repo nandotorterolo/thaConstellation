@@ -16,7 +16,7 @@ import org.http4s.headers.`Content-Type`
 import scodec.bits.ByteVector
 import scodec.Codec
 
-class InspectTransactionCommand[F[_]: Async: Console](cripto: Cripto[F], path: Path) {
+class TransactionByIdCommand[F[_]: Async: Console](cripto: Cripto[F], path: Path) {
 
   private val command: CommandT[F, Unit] = {
     val res = for {
@@ -48,7 +48,7 @@ class InspectTransactionCommand[F[_]: Async: Console](cripto: Cripto[F], path: P
         case m: ModelThrowable       => write[F](show"Error: $m")
         case e: Throwable            => write[F](s"Error: ${e.getMessage}")
       }
-      .subflatMap(_ => Command.Menu)
+      .subflatMap(_ => Command.MenuTransaction)
   }
 
   private def getTransaction(transactionIdAddressIdSigned: TransactionIdAddressIdSigned): CommandT[F, Unit] = {
@@ -58,7 +58,7 @@ class InspectTransactionCommand[F[_]: Async: Console](cripto: Cripto[F], path: P
 
     val request: Request[F] =
       Request[F]()
-        .withUri(txInspectUri)
+        .withUri(txByIdUri)
         .withMethod(Method.POST)
         .withContentType(`Content-Type`(MediaType.application.`octet-stream`))
         .withBodyStream(entityBody)
@@ -75,7 +75,7 @@ class InspectTransactionCommand[F[_]: Async: Console](cripto: Cripto[F], path: P
 
 }
 
-object InspectTransactionCommand {
+object TransactionByIdCommand {
   def apply[F[_]: Async: Console](implicit cripto: Cripto[F], path: Path): CommandT[F, Unit] =
-    new InspectTransactionCommand[F](cripto, path).command
+    new TransactionByIdCommand[F](cripto, path).command
 }

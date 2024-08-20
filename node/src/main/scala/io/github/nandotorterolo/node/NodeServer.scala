@@ -21,7 +21,8 @@ import io.github.nandotorterolo.node.routes.BlockRoute
 import io.github.nandotorterolo.node.routes.HealthRoute
 import io.github.nandotorterolo.node.routes.RegistrationRoute
 import io.github.nandotorterolo.node.routes.TransactionBroadcastRoute
-import io.github.nandotorterolo.node.routes.TransactionInspectRoute
+import io.github.nandotorterolo.node.routes.TransactionByIdRoute
+import io.github.nandotorterolo.node.routes.TransactionsByAccountRoute
 import io.github.nandotorterolo.node.service.HealthService
 import io.github.nandotorterolo.node.service.MemPoolServiceQueue
 import io.github.nandotorterolo.node.service.ServerCredentialsImpl
@@ -54,7 +55,7 @@ object NodeServer {
       _ <- Resource.make(Async[F].blocking(arcadeDBServer.start()))(_ => Async[F].blocking(arcadeDBServer.stop()))
 
       db <- Resource.eval(Async[F].blocking(arcadeDBServer.getOrCreateDatabase("Node")).attempt).rethrow
-      _ <- Resource.eval(SchemaFactory.make(db.getSchema)).rethrow
+      _  <- Resource.eval(SchemaFactory.make(db.getSchema)).rethrow
 
       accountsStorage    = AccountsArcadeDBImpl.build[F](db)
       blocksStorage      = BlocksArcadeDBImpl.build[F](db)
@@ -117,8 +118,9 @@ object NodeServer {
         (
           RegistrationRoute.route[F](cripto, storageService, pool)
             <+> BalanceRoute.route[F](cripto, storageService)
+            <+> TransactionsByAccountRoute.route[F](cripto, storageService)
             <+> TransactionBroadcastRoute.route[F](tv, tsv, tov, tnv, pool)
-            <+> TransactionInspectRoute.route[F](cripto, storageService)
+            <+> TransactionByIdRoute.route[F](cripto, storageService)
             <+> BlockRoute.route[F](storageService)
             <+> HealthRoute.route[F](healthService)
         ).orNotFound

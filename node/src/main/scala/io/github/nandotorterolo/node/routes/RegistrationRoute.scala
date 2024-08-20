@@ -9,6 +9,7 @@ import io.github.nandotorterolo.crypto.Cripto
 import io.github.nandotorterolo.models.AccountSigned
 import io.github.nandotorterolo.models.ModelThrowable
 import io.github.nandotorterolo.models.ModelThrowable.ConflictMessage
+import io.github.nandotorterolo.models.ModelThrowable.InvalidRequestParam
 import io.github.nandotorterolo.models.ModelThrowable.Message
 import io.github.nandotorterolo.models.ModelThrowable.SignatureValidation
 import io.github.nandotorterolo.node.interfaces.MemPoolService
@@ -41,7 +42,7 @@ object RegistrationRoute {
                 .to(ByteVector)
                 .map(bv => AccountSigned.codec.decode(bv.bits))
                 .map(_.toEither)
-            ).leftMap(_ => Message("InvalidRequestParam"): ModelThrowable)
+            ).leftMap(_ => InvalidRequestParam: ModelThrowable)
 
           account = accountSigned.value.message
 
@@ -61,7 +62,8 @@ object RegistrationRoute {
         } yield accountSigned.value
         response.value
           .flatMap {
-            case Right(accountSigned)      => Ok(show"${accountSigned.asJson.noSpaces}")
+            case Right(accountSigned)      => Ok(accountSigned.asJson)
+            case Left(InvalidRequestParam) => BadRequest(show"$InvalidRequestParam")
             case Left(SignatureValidation) => BadRequest(show"$SignatureValidation")
             case Left(ConflictMessage(s))  => Conflict(s"Service error: $s")
             case Left(Message(s))          => InternalServerError(s"Service error: $s")
