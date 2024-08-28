@@ -93,7 +93,7 @@ class GetBlockByBlockIdHandlerImplSpec extends CatsEffectSuite {
   /**
    * https://datatracker.ietf.org/doc/html/rfc9421#name-creating-a-signature
    */
-  test("Get Block by BlockId returns status code 200, HttpSignatures Middleware RFC 9421".only) {
+  test("Get Block by BlockId returns status code 200, HttpSignatures Middleware RFC 9421") {
 
     for {
       kp <- cripto.getKeyPair.rethrow
