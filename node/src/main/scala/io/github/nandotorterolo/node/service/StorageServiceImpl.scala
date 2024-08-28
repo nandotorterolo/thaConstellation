@@ -97,11 +97,11 @@ class StorageServiceImpl[F[_]: Async](
   override def getBlockHead: F[Either[ModelThrowable, BlockSigned]] =
     blocksStorage.getHeight.flatMap(h => blocksStorage.getAtSequenceNumber(h).map(_.toRight(Message("Head unreachable"))))
 
-  override def getBlock(blockId: BlockId): F[Either[ModelThrowable, Block]] =
+  override def getBlock(blockId: BlockId): F[Either[ModelThrowable, BlockSigned]] =
     blocksStorage.get(blockId)
 
-  override def getBlockBySeqNumber(seqNumber: Int): F[Either[ModelThrowable, Block]] =
-    blocksStorage.getAtSequenceNumber(seqNumber).map(_.toRight(EntityNotFound).map(_.message))
+  override def getBlockBySeqNumber(seqNumber: Int): F[Either[ModelThrowable, BlockSigned]] =
+    blocksStorage.getAtSequenceNumber(seqNumber).map(_.toRight(EntityNotFound))
 
   override def saveAccount(accountSigned: AccountSigned): F[Either[ModelThrowable, AccountSigned]] =
     accountsStorage.contains(accountSigned.message.address.addressId).flatMap {

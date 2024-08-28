@@ -1,0 +1,261 @@
+openapi: 3.0.1
+info:
+  title: Node api
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/
+paths:
+  /account/balance:
+    post:
+      operationId: accountDetails
+      tags:
+        - account
+      x-scala-package: account
+      requestBody:
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+              x-scala-type: "fs2.Chunk[Byte]"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+
+        "400":
+          $ref: '#/components/responses/BadRequest'
+
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+        "500":
+          $ref: '#/components/responses/InternalError'
+
+
+  /block/{sequenceNumber}:
+    get:
+      operationId: getBlockBySequenceNumber
+      tags:
+        - block
+      x-scala-package: block
+      parameters:
+        - in: path
+          name: sequenceNumber
+          required: true
+          description: Block sequence number
+          example: 0,1,2,N
+          schema:
+            type: integer
+            x-scala-type: "Int"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlockResponse'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+        "500":
+          $ref: '#/components/responses/InternalError'
+
+  /block/{blockId}:
+    get:
+      operationId: getBlockByBlockId
+      security:
+        - basic:
+            - []
+      tags:
+        - block
+      x-scala-package: blockAuthed
+      parameters:
+        - in: path
+          name: blockId
+          required: true
+          description: Block Id
+          example: 2kfGKt72mikno6hdQrrX3eEgZaK7DvgiBymgx3FGNkSjoP1TQjjqN8M7MS8HScPkPuPBrri3ZHyGvGegu91c4PDu
+          schema:
+            type: string
+            x-scala-type: "String"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlockResponse'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+        "500":
+          $ref: '#/components/responses/InternalError'
+
+  /blockV2/{blockId}:
+    get:
+      operationId: getBlockByBlockIdV2
+      security:
+        - basic:
+            - [ ]
+      tags:
+        - block
+      x-scala-package: blockAuthedV2
+      parameters:
+        - in: header
+          name: "Content-Digest"
+          schema:
+            type: string
+            description:
+              "https://datatracker.ietf.org/doc/html/rfc9421#section-4"
+            example:
+              "SHA256withPLAIN-ECDSA=:<hash>.toBase64:"
+          required: true
+        - in: header
+          name: "Signature-Input"
+          schema:
+            type: string
+            description:
+              "https://datatracker.ietf.org/doc/html/rfc9421#section-4"
+            example: \"sig1=("content-digest");keyid="message.toBase64"
+          required: true
+        - in: header
+          name: "Signature"
+          schema:
+            type: string
+            description:
+              "https://datatracker.ietf.org/doc/html/rfc9421#section-4"
+            example: "sig1=:signature.toBase64:"
+          required: true
+        - in: path
+          name: blockId
+          required: true
+          description: Block Id
+          example: 2kfGKt72mikno6hdQrrX3eEgZaK7DvgiBymgx3FGNkSjoP1TQjjqN8M7MS8HScPkPuPBrri3ZHyGvGegu91c4PDu
+          schema:
+            type: string
+            x-scala-type: "String"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlockResponse'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+        "500":
+          $ref: '#/components/responses/InternalError'
+
+
+components:
+
+  securitySchemes:
+    basic:
+      type: http
+      scheme: basic
+
+  schemas:
+    AccountResponse:
+      type: object
+      required:
+        - address
+        - balance
+        - latestUsedNonce
+      properties:
+        address:
+          type: string
+          example: 2qYgUZwiJQJsJzrusHHnssU5UvGD
+        balance:
+          type: number
+          example: 100.5
+        latestUsedNonce:
+          type: number
+          example: 1
+
+    BlockResponse:
+      type: object
+      required:
+        - blockId
+        - priorBlock
+        - sequenceNumber
+        - transactions
+      properties:
+        blockId:
+          type: string
+          example: 2kfGKt72mikno6hdQrrX3eEgZaK7DvgiBymgx3FGNkSjoP1TQjjqN8M7MS8HScPkPuPBrri3ZHyGvGegu91c4PDu
+        priorBlock:
+          type: string
+          example: 2kfGKt72mikno6hdQrrX3eEgZaK7DvgiBymgx3FGNkSjoP1TQjjqN8M7MS8HScPkPuPBrri3ZHyGvGegu91c4PDu
+        sequenceNumber:
+          type: number
+          example: 1
+        transactions:
+          type: string
+          example: List(2qYgUZwiJQJsJzrusHHnssU5UvGD,2qYgUZwiJQJsJzrusHHnssU5UvGD)
+
+    ErrorModel:
+      type: object
+      required:
+        - message
+        - code
+      properties:
+        message:
+          type: string
+          example: "Invalid request parameters, Not found, Signature issues"
+        code:
+          type: integer
+          minimum: 100
+          maximum: 600
+
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorModel'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorModel'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorModel'
+    NotFound:
+      description: The specified resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorModel'
+    InternalError:
+      description: Internal error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorModel'

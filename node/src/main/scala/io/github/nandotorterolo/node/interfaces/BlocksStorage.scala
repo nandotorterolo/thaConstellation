@@ -1,10 +1,6 @@
 package io.github.nandotorterolo.node.interfaces
 
-import io.github.nandotorterolo.models.Block
-import io.github.nandotorterolo.models.BlockId
-import io.github.nandotorterolo.models.BlockSigned
-import io.github.nandotorterolo.models.ModelThrowable
-import io.github.nandotorterolo.models.TransactionSigned
+import io.github.nandotorterolo.models._
 
 trait BlocksStorage[F[_]] {
 
@@ -32,7 +28,7 @@ trait BlocksStorage[F[_]] {
    * @param blockId block id
    * @return
    */
-  def get(blockId: BlockId): F[Either[ModelThrowable, Block]]
+  def get(blockId: BlockId): F[Either[ModelThrowable, BlockSigned]]
 
   /**
    * is the block chain empty

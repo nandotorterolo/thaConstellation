@@ -45,9 +45,9 @@ class RegistrationRouteSpec extends CatsEffectSuite {
 
       override def getBlockHead: IO[Either[ModelThrowable, BlockSigned]] = ???
 
-      override def getBlock(blockId: BlockId): IO[Either[ModelThrowable, Block]] = ???
+      override def getBlock(blockId: BlockId): IO[Either[ModelThrowable, BlockSigned]] = ???
 
-      override def getBlockBySeqNumber(seqNumber: Int): IO[Either[ModelThrowable, Block]] = ???
+      override def getBlockBySeqNumber(seqNumber: Int): IO[Either[ModelThrowable, BlockSigned]] = ???
 
       override def createGenesisBlock(): IO[Either[ModelThrowable, BlockSigned]] = ???
 

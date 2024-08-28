@@ -19,6 +19,13 @@ import scodec.bits.ByteVector
 
 object BalanceRoute {
 
+  /**
+   * @deprecated("this method will be removed", "AccountBalanceHandlerImpl")
+   * @param cripto
+   * @param storage
+   * @tparam F
+   * @return
+   */
   def route[F[_]: Async](cripto: Cripto[F], storage: StorageService[F]): HttpRoutes[F] = {
     val dsl = new Http4sDsl[F] {}
     import dsl._

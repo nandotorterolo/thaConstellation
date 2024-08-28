@@ -47,7 +47,7 @@ object Cli extends IOApp.Simple {
       case _                             => CommandT.commandTMonadThrow[IO].raiseError[Unit](new IllegalStateException("handle cli command miss match!"))
     }
 
-  private val cliResource: Resource[IO, Unit] = {
+  private val cliResource: Resource[IO, Command[Unit]] = {
     Sync[IO]
       .defer(
         write[IO]("CLI:").value >>
@@ -55,19 +55,21 @@ object Cli extends IOApp.Simple {
             .flatMap(c => handleCommand(c))
             .value
             .flatMapOrKeep {
-              case MenuTransaction => handleCommand(CliCommand.CliTransactionMenu).value
-              case MenuBlock       => handleCommand(CliCommand.CliBlockMenu).value
-              case MenuAccount     => handleCommand(CliCommand.CliAccountMenu).value
+              case MenuTransaction =>
+                handleCommand(CliCommand.CliTransactionMenu).value.iterateWhile(_ == Command.MenuTransaction)
+              case MenuBlock =>
+                handleCommand(CliCommand.CliBlockMenu).value.iterateWhile(_ == Command.MenuBlock)
+              case MenuAccount =>
+                handleCommand(CliCommand.CliAccountMenu).value.iterateWhile(_ == Command.MenuAccount)
             }
             .iterateWhile(_ != Command.Exit)
-            .void
       )
       .toResource
   }
 
   def run: IO[Unit] = {
     Security.addProvider(new BouncyCastleProvider())
-    cliResource.useForever
+    cliResource.iterateUntil(_ == Command.Exit).use_
   }
 
 }

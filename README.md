@@ -45,7 +45,10 @@ if you try to get Block information, here is not neccesary to sign the body, the
 ... more examples
 
 
-A `swagger.yml` is attached in the root repository which describe the Api operations. [swagger](https://editor.swagger.io/)
+### Api documentation
+- A `node.yaml` is attached in the node/resources folder which describe the Api operations. [swagger](https://editor.swagger.io/)
+- The compile task in Node project trigger and task that generates routes, from the api specification. [guardrail](https://github.com/guardrail-dev)
+- This file should be the source of the truth and every other route not implemented should be moved to there.
 
 
 - POST /account/balance
@@ -60,8 +63,13 @@ A `swagger.yml` is attached in the root repository which describe the Api operat
 - POST /transaction/inspect
   - body : Binary encoded model of class: [TransactionIdAddressIdSigned](./common/src/main/scala/io/github/nandotorterolo/models/TransactionIdAddressIdSigned.scala)
 
-- POST / block
-  - body : Binary encoded model of class: [BlockId](./common/src/main/scala/io/github/nandotorterolo/models/BlockId.scala)
+#### Block Api
+- GET / block/{blockId} : returns a block by Id, an account registered could fetch any block, requires an account
+
+  - see [Authed route implmentation](./cli/src/main/scala/cli/commands/BlockByIdCommand.scala) 
+  - see [Authed route test example](./node/src/test/scala/io/github/nandotorterolo/routes/GetBlockByIdAuthedRouteSpec.scala)
+  - see [Authed Guardrail test example](./node/src/test/scala/io/github/nandotorterolo/routes/GetBlockByBlockIdHandlerImplSpec.scala)
+  
 
 ### CLI
 

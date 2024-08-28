@@ -16,6 +16,7 @@ object CliCommand {
 
   case object CliBlockMenu        extends CliCommand
   case object CliBlockById        extends CliCommand
+  case object CliBlockByIdV2      extends CliCommand
   case object CliBlockBySeqNumber extends CliCommand
 
   case object CliTransactionMenu   extends CliCommand

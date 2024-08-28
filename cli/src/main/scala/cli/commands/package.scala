@@ -12,5 +12,6 @@ package object commands {
   val broadcastUri: Uri            = Uri.unsafeFromString(s"$url/transaction/broadcast")
   val txByIdUri: Uri               = Uri.unsafeFromString(s"$url/transaction/byId")
   val blockUri: Uri                = Uri.unsafeFromString(s"$url/block")
+  val blockUriV2: Uri              = Uri.unsafeFromString(s"$url/blockV2")
 
 }

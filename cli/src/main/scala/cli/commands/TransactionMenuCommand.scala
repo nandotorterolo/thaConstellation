@@ -32,7 +32,7 @@ class TransactionMenuCommand[F[_]: Async: Console](implicit cripto: Cripto[F], p
       case CliCommand.CliTransactionCreate => TransactionCreateCommand[F]
       case CliCommand.CliTransactionById   => TransactionByIdCommand[F]
       case CliCommand.CliMenu              => MenuCommand[F]
-      case CliCommand.CliHelp              => HelpCommand[F](Command.menuAccount)
+      case CliCommand.CliHelp              => HelpCommand[F](Command.menuTransaction)
       case CliCommand.CliQuit              => QuitCommand[F]
       case _                               => CommandT.commandTMonadThrow[F].raiseError[Unit](new IllegalStateException("handle account command miss match!"))
     }
