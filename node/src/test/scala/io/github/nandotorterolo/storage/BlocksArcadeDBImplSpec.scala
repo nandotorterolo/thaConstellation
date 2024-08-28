@@ -67,7 +67,7 @@ class BlocksArcadeDBImplSpec extends CatsEffectSuite {
 
       blockStorage: BlocksStorage[IO] = new BlocksArcadeDBImpl[IO](database)
 
-      _ <- assertIO(blockStorage.get(BlockId(blockSigned.hash.value)), Right(block).withLeft[ModelThrowable])
+      _ <- assertIO(blockStorage.get(BlockId(blockSigned.hash.value)), Right(blockSigned).withLeft[ModelThrowable])
       _ <- assertIO(blockStorage.getAtSequenceNumber(5), Option(blockSigned))
       _ <- assertIO(blockStorage.getHeight, 5)
 
@@ -107,7 +107,7 @@ class BlocksArcadeDBImplSpec extends CatsEffectSuite {
       accountsStorage: AccountsStorage[IO] = new AccountsArcadeDBImpl[IO](database)
 
       _ <- assertIO(blockStorage.insert(blockGenesisSigned, Vector.empty), Right(blockGenesisSigned).withLeft[ModelThrowable])
-      _ <- assertIO(blockStorage.get(BlockId(blockGenesisSigned.hash.value)).map(_.map(_.sequenceNumber)), Right(0).withLeft[ModelThrowable])
+      _ <- assertIO(blockStorage.get(BlockId(blockGenesisSigned.hash.value)).map(_.map(_.message.sequenceNumber)), Right(0).withLeft[ModelThrowable])
 
       // Save block 1
       transaction = Transaction(
@@ -126,7 +126,7 @@ class BlocksArcadeDBImplSpec extends CatsEffectSuite {
       blockSigned <- block.sign(kpServer.getPrivate)(cripto).rethrow
 
       _ <- assertIO(blockStorage.insert(blockSigned, Vector(transactionSigned)), Right(blockSigned).withLeft[ModelThrowable])
-      _ <- assertIO(blockStorage.get(BlockId(blockSigned.hash.value)).map(_.map(_.sequenceNumber)), Right(1).withLeft[ModelThrowable])
+      _ <- assertIO(blockStorage.get(BlockId(blockSigned.hash.value)).map(_.map(_.message.sequenceNumber)), Right(1).withLeft[ModelThrowable])
 
       // validate accounts
       _ <- assertIO(accountsStorage.get(sourceAccount.address.addressId).map(_.map(_.balance)), Some(99d))

@@ -1,15 +1,6 @@
 package io.github.nandotorterolo.node.interfaces
 
-import io.github.nandotorterolo.models.Account
-import io.github.nandotorterolo.models.AccountSigned
-import io.github.nandotorterolo.models.AddressId
-import io.github.nandotorterolo.models.Block
-import io.github.nandotorterolo.models.BlockId
-import io.github.nandotorterolo.models.BlockSigned
-import io.github.nandotorterolo.models.ModelThrowable
-import io.github.nandotorterolo.models.Transaction
-import io.github.nandotorterolo.models.TransactionId
-import io.github.nandotorterolo.models.TransactionSigned
+import io.github.nandotorterolo.models._
 
 trait StorageService[F[_]] {
 
@@ -38,9 +29,9 @@ trait StorageService[F[_]] {
 
   def getBlockHead: F[Either[ModelThrowable, BlockSigned]]
 
-  def getBlock(blockId: BlockId): F[Either[ModelThrowable, Block]]
+  def getBlock(blockId: BlockId): F[Either[ModelThrowable, BlockSigned]]
 
-  def getBlockBySeqNumber(seqNumber: Int): F[Either[ModelThrowable, Block]]
+  def getBlockBySeqNumber(seqNumber: Int): F[Either[ModelThrowable, BlockSigned]]
 
   // only used 1 time, the first time the node is created
   def createGenesisBlock(): F[Either[ModelThrowable, BlockSigned]]

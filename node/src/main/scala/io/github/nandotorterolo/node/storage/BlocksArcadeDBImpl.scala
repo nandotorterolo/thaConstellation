@@ -10,6 +10,7 @@ import com.arcadedb.database.Database
 import com.arcadedb.query.sql.executor.EmptyResult
 import com.arcadedb.query.sql.executor.ResultInternal
 import io.github.nandotorterolo.models._
+import io.github.nandotorterolo.models.ModelThrowable.EntityNotFound
 import io.github.nandotorterolo.models.ModelThrowable.Message
 import io.github.nandotorterolo.node.interfaces.BlocksStorage
 import io.github.nandotorterolo.node.service.AccountsUpdaterImpl
@@ -107,13 +108,12 @@ class BlocksArcadeDBImpl[F[_]: Async](db: Database) extends BlocksStorage[F] {
     }
   }
 
-  override def get(blockId: BlockId): F[Either[ModelThrowable, Block]] =
+  override def get(blockId: BlockId): F[Either[ModelThrowable, BlockSigned]] =
     EitherT
       .fromOptionF(
         BlockVertex.lookup(blockId.value.toBase58)(db),
-        Message("Block Not Found"): ModelThrowable
+        EntityNotFound: ModelThrowable
       )
-      .map(_.message)
       .value
 
   override def isEmpty: F[Boolean] = getAtSequenceNumber(0).map(_.isEmpty)

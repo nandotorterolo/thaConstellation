@@ -10,7 +10,7 @@ package object validators {
 
   def storageMock(
       accounts: Map[AddressId, Account] = Map.empty,
-      blocks: Map[BlockId, Block] = Map.empty,
+      blocks: Map[BlockId, BlockSigned] = Map.empty,
       transactions: Map[TransactionId, TransactionSigned] = Map.empty,
   ): StorageService[IO] =
     new StorageService[IO] {
@@ -28,11 +28,11 @@ package object validators {
 
       override def getBlockHead: IO[Either[ModelThrowable, BlockSigned]] = ???
 
-      override def getBlock(blockId: BlockId): IO[Either[ModelThrowable, Block]] =
-        blocks(blockId).asRight[ModelThrowable].pure[IO]
+      override def getBlock(blockId: BlockId): IO[Either[ModelThrowable, BlockSigned]] =
+        blocks.get(blockId).toRight(EntityNotFound: ModelThrowable).pure[IO]
 
-      override def getBlockBySeqNumber(seqNumber: Int): IO[Either[ModelThrowable, Block]] =
-        blocks.find { case (_, b) => b.sequenceNumber == seqNumber }.map(_._2).toRight(EntityNotFound).pure[IO]
+      override def getBlockBySeqNumber(seqNumber: Int): IO[Either[ModelThrowable, BlockSigned]] =
+        blocks.find { case (_, b) => b.message.sequenceNumber == seqNumber }.map(_._2).toRight(EntityNotFound).pure[IO]
 
       override def createGenesisBlock(): IO[Either[ModelThrowable, BlockSigned]] = ???
 
